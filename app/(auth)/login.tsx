@@ -124,7 +124,7 @@ export default function LoginScreen() {
 
           <Button
             title="Continue as Guest"
-            onPress={() => router.push('/(auth)/guest')}
+            onPress={() => router.push('/guest')}
             variant="outline"
           />
         </View>
