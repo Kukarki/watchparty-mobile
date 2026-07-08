@@ -3,7 +3,7 @@ import { Animated, StyleSheet, View, ViewStyle } from 'react-native';
 import { COLORS, RADIUS, SPACE } from '@/constants';
 
 interface SkeletonBoxProps {
-  width: number | string;
+  width: number | `${number}%` | 'auto';
   height: number;
   borderRadius?: number;
   style?: ViewStyle;

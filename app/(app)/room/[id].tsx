@@ -384,10 +384,10 @@ export default function RoomScreen() {
           contentContainerStyle={styles.presenceRow}
         >
           {members.map((m) => (
-            <View key={m.id} style={styles.presenceItem}>
+            <View key={m.user_id} style={styles.presenceItem}>
               <View style={styles.presenceAvatar}>
                 <Text style={styles.presenceInitial}>
-                  {(m.username ?? m.id).charAt(0).toUpperCase()}
+                  {(m.username ?? m.user_id).charAt(0).toUpperCase()}
                 </Text>
                 <View style={styles.onlineDot} />
               </View>

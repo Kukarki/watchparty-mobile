@@ -24,6 +24,7 @@ export interface ChatMessage {
   user_id: string;
   username: string;
   content: string;
+  replyTo?: string;
   created_at: string;
   reactions?: Record<string, string[]>;
 }

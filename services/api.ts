@@ -72,6 +72,7 @@ export function mapChatMessage(message: any): ChatMessage {
     user_id: message.userId ?? message.user_id,
     username: message.displayName ?? message.username ?? message.display_name ?? 'Guest',
     content: message.content,
+    replyTo: message.replyTo ?? message.reply_to,
     created_at: message.createdAt
       ? new Date(message.createdAt).toISOString()
       : (message.created_at ?? new Date().toISOString()),
