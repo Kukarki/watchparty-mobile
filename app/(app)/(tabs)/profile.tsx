@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/auth.store';
-import { AvatarApi, useAvatarStore } from '../../../../avatar';
-import { ProfileTabScreen } from '../../../../WatchPartyUI';
+import { AvatarApi, useAvatarStore } from '../../../avatar';
+import { ProfileTabScreen } from '../../../WatchPartyUI';
 
 export default function ProfileScreen() {
   const { user } = useAuthStore();
@@ -21,7 +21,7 @@ export default function ProfileScreen() {
   const [AvatarStage, setAvatarStage] = useState<React.ComponentType<any> | null>(null);
   useEffect(() => {
     if (saved) {
-      import('../../../../avatar/three/AvatarStage').then((m) => setAvatarStage(() => m.default));
+      import('../../../avatar/three/AvatarStage').then((m) => setAvatarStage(() => m.default));
     }
   }, [!!saved]);
 
