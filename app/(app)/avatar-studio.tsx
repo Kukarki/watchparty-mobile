@@ -1,7 +1,11 @@
-import { Redirect } from 'expo-router';
+import { router } from 'expo-router';
+import StudioScreen from '../../avatar/screens/StudioScreen';
 
-// expo-gl (WebGL) is not available in Expo Go SDK 56 — redirect to the
-// DiceBear avatar editor which has no native-module dependency.
 export default function AvatarStudioRoute() {
-  return <Redirect href="/(app)/avatar-editor" />;
+  return (
+    <StudioScreen
+      onClose={() => router.back()}
+      onSaved={() => router.back()}
+    />
+  );
 }
