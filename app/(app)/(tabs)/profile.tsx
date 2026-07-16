@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/auth.store';
 import { AvatarApi, useAvatarStore } from '../../../avatar';
-import { ProfileTabScreen } from '../../../WatchPartyUI';
+import { ProfileTabScreen } from '../../../wp-ui';
 
 export default function ProfileScreen() {
   const { user } = useAuthStore();

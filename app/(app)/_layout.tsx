@@ -86,6 +86,15 @@ export default function AppLayout() {
         name="game/[sessionId]"
         options={{ headerShown: false, presentation: 'fullScreenModal' }}
       />
+
+      {/* Settings stack */}
+      <Stack.Screen name="settings" options={{ headerShown: false }} />
+      <Stack.Screen name="settings/account" options={{ headerShown: false }} />
+      <Stack.Screen name="settings/[pref]" options={{ headerShown: false }} />
+
+      {/* Social & progress */}
+      <Stack.Screen name="achievements" options={{ headerShown: false }} />
+      <Stack.Screen name="leaderboard" options={{ headerShown: false }} />
     </Stack>
   );
 }
