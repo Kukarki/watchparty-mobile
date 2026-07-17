@@ -18,7 +18,7 @@ const CATEGORY_LABELS = {
 export default function InventoryScreen({ onEquip, onClose }) {
   const { catalog, ownedSet, progression, equipItem } = useAvatarStore();
   const [category, setCategory] = useState('all');
-  const [ownedOnly, setOwnedOnly] = useState(true);
+  const [ownedOnly, setOwnedOnly] = useState(false);
 
   const level = (progression && progression.level) || 1;
 

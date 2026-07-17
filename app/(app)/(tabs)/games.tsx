@@ -1,26 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { router } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { PlayScreen } from '../../../wp-ui';
 import { socketService } from '@/services/socket';
 
 export default function GamesTab() {
-  function launchGame(game: { id: string }) {
-    const socket = socketService.instance;
-    if (!socket) {
-      Toast.show({ type: 'error', text1: 'Not connected', text2: 'Please rejoin a room first' });
-      return;
+  const [launching, setLaunching] = useState(false);
+
+  async function launchGame(game: { id: string }) {
+    if (launching) return;
+    setLaunching(true);
+    try {
+      const socket = await socketService.connect();
+      socket.emit('game:create', { gameId: game.id }, (res: any) => {
+        setLaunching(false);
+        if (res?.error) {
+          Toast.show({ type: 'error', text1: `Could not start game: ${res.error}` });
+          return;
+        }
+        const { sessionId } = res.session ?? {};
+        if (sessionId) {
+          router.push({ pathname: '/(app)/game/[sessionId]', params: { sessionId, gameId: game.id } });
+        }
+      });
+    } catch (err) {
+      setLaunching(false);
+      Toast.show({ type: 'error', text1: 'Could not connect to server' });
     }
-    socket.emit('game:create', { gameId: game.id }, (res: any) => {
-      if (res?.error) {
-        Toast.show({ type: 'error', text1: `Could not create game: ${res.error}` });
-        return;
-      }
-      const { sessionId } = res.session ?? {};
-      if (sessionId) {
-        router.push({ pathname: '/(app)/game/[sessionId]', params: { sessionId, gameId: game.id } });
-      }
-    });
   }
 
   function joinSession(session: { sessionId: string; gameId?: string }) {

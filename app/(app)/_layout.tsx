@@ -78,8 +78,8 @@ export default function AppLayout() {
 
       {/* Avatar screens */}
       <Stack.Screen name="avatar-studio" options={{ title: 'Avatar Studio', headerShown: false }} />
-      <Stack.Screen name="avatar-inventory" options={{ title: 'Inventory' }} />
-      <Stack.Screen name="avatar-shop" options={{ title: 'Shop' }} />
+      <Stack.Screen name="avatar-inventory" options={{ headerShown: false }} />
+      <Stack.Screen name="avatar-shop" options={{ headerShown: false }} />
 
       {/* Game screen: slides up full-screen */}
       <Stack.Screen

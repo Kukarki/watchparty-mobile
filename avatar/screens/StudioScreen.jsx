@@ -63,8 +63,17 @@ export default function StudioScreen({ onClose, onSaved }) {
 
   if (!draft) {
     return (
-      <View style={[st.root, st.center]}>
-        <Txt s="dim">Loading Studio…</Txt>
+      <View style={st.root}>
+        <View style={st.header}>
+          <Pressable onPress={() => onClose && onClose()} hitSlop={10}>
+            <Txt s="h1">✕</Txt>
+          </Pressable>
+          <Txt s="h2">Avatar Studio</Txt>
+          <View style={{ width: 80 }} />
+        </View>
+        <View style={[st.center, { flex: 1 }]}>
+          <Txt s="dim">Loading Studio…</Txt>
+        </View>
       </View>
     );
   }

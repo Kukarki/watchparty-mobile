@@ -37,10 +37,14 @@ export default function ShopScreen({ onClose }) {
   const store = useAvatarStore();
   const { ownedSet, progression, purchase } = store;
   const [shop, setShop] = useState(null);
+  const [loadError, setLoadError] = useState(null);
   const [category, setCategory] = useState('all');
   const [busy, setBusy] = useState(null);
 
-  const load = () => AvatarApi.shop().then(setShop).catch((e) => Alert.alert('Shop', e.message));
+  const load = () => {
+    setLoadError(null);
+    AvatarApi.shop().then(setShop).catch((e) => setLoadError(e.message || 'Could not load shop'));
+  };
   useEffect(() => { load(); }, []);
 
   const level = (shop && shop.level) || (progression && progression.level) || 1;
@@ -84,7 +88,27 @@ export default function ShopScreen({ onClose }) {
   };
 
   if (!shop) {
-    return <View style={[st.root, st.center]}><Txt s="dim">Opening shop…</Txt></View>;
+    return (
+      <View style={[st.root, st.center]}>
+        {loadError ? (
+          <>
+            <Txt s="dim" style={{ textAlign: 'center', marginBottom: 16 }}>
+              {loadError}
+            </Txt>
+            <Pressable onPress={load} style={st.retryBtn}>
+              <Txt style={{ color: colors.beamHot, fontWeight: '700' }}>Retry</Txt>
+            </Pressable>
+            {onClose && (
+              <Pressable onPress={onClose} style={{ marginTop: 12 }}>
+                <Txt s="dim">← Go back</Txt>
+              </Pressable>
+            )}
+          </>
+        ) : (
+          <Txt s="dim">Opening shop…</Txt>
+        )}
+      </View>
+    );
   }
 
   return (
@@ -166,6 +190,10 @@ const st = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 11, fontWeight: '700', letterSpacing: 1.2, marginLeft: 16, marginBottom: 8,
+  },
+  retryBtn: {
+    paddingHorizontal: 24, paddingVertical: 10, borderRadius: 12,
+    backgroundColor: colors.beam + '22', borderWidth: 1, borderColor: colors.beam,
   },
   featuredCell: { alignItems: 'center', gap: 4 },
   dealBadge: {

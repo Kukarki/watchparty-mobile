@@ -263,7 +263,7 @@ export default function HubHome({
             <Widget icon="videocam" title="Host" sub="YouTube, or sync any app"
               onPress={onHost} />
             <Widget icon="albums" title="Games" tint={c.cyan}
-              sub={counts.games ? `${counts.games} at a table` : 'WildBeam · Match Blitz · Ludo'}
+              sub={counts.games ? `${counts.games} at a table` : 'Play together'}
               badge={counts.games ? String(counts.games) : null} badgeTone={c.cyan}
               onPress={onOpenGames} />
           </View>

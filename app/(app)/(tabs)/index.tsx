@@ -65,8 +65,7 @@ export default function HomeTab() {
         live={live}
         friendsOnline={friendsOnline}
         resume={room ? { title: room.name, subtitle: 'Resume your room', live: false } : undefined}
-        challenge={{ title: 'Daily challenge', sub: 'Host a room · +100 XP' }}
-        refreshing={refreshing}
+refreshing={refreshing}
         onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }}
         onHost={() => setShowPicker(true)}
         onResume={() => room && router.push(`/(app)/room/${room.id}`)}
