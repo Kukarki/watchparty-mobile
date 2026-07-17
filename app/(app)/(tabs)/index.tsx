@@ -13,7 +13,7 @@ export default function HomeTab() {
   const { user } = useAuthStore();
   const { progression } = useAvatarStore();
   const { friends, onlineFriendIds } = useFriendStore();
-  const room = useRoomStore((s) => s.room);
+  const room = useRoomStore((s) => s.currentRoom);
   const setRoom = useRoomStore((s) => s.setRoom);
 
   const [live, setLive] = useState<any[]>([]);

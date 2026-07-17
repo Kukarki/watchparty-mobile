@@ -62,6 +62,7 @@ export default function RoomScreen() {
   // ── Badge count (app icon) ─────────────────────────────────────────────────
   const appStateRef = useRef(AppState.currentState);
   const unreadRef = useRef(0);
+  const leavePayloadRef = useRef<{ endForAll?: boolean }>({});
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
@@ -107,17 +108,26 @@ export default function RoomScreen() {
   const prevPlayingRef = useRef(false);
   const videoState = useRoomStore((s) => s.videoState);
 
+  const countdownIvRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
     if (videoState.isPlaying && !prevPlayingRef.current) {
+      if (countdownIvRef.current) clearInterval(countdownIvRef.current);
       setCountdown(3);
-      const iv = setInterval(() => {
+      countdownIvRef.current = setInterval(() => {
         setCountdown((c) => {
-          if (c === null || c <= 1) { clearInterval(iv); return null; }
+          if (c === null || c <= 1) {
+            clearInterval(countdownIvRef.current!);
+            countdownIvRef.current = null;
+            return null;
+          }
           return c - 1;
         });
       }, 1000);
     }
     prevPlayingRef.current = videoState.isPlaying;
+    return () => {
+      if (countdownIvRef.current) { clearInterval(countdownIvRef.current); countdownIvRef.current = null; }
+    };
   }, [videoState.isPlaying]);
 
   const isHost = currentRoom?.host_id === user?.id;
@@ -260,7 +270,7 @@ export default function RoomScreen() {
 
     return () => {
       mounted = false;
-      socketService.emit(SOCKET_EVENTS.LEAVE_ROOM, { roomId: id });
+      socketService.emit(SOCKET_EVENTS.LEAVE_ROOM, { roomId: id, ...leavePayloadRef.current });
       socketService.off(SOCKET_EVENTS.ROOM_JOINED, onRoomJoined);
       socketService.off(SOCKET_EVENTS.ROOM_ERROR, onRoomError);
       socketService.off(SOCKET_EVENTS.MEMBER_JOINED, onMemberJoined);
@@ -301,7 +311,7 @@ export default function RoomScreen() {
         text: 'End Party',
         style: 'destructive',
         onPress: () => {
-          socketService.emit(SOCKET_EVENTS.LEAVE_ROOM, { roomId: id, endForAll: true });
+          leavePayloadRef.current = { endForAll: true };
           router.back();
         },
       },

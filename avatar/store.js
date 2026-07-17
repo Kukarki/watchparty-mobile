@@ -15,9 +15,13 @@ const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 // set a value at a dotted path ('face.eyes.color') on a cloned recipe
 function setPath(obj, path, value) {
+  if (!obj) return obj;
   const keys = path.split('.');
   let node = obj;
-  for (let i = 0; i < keys.length - 1; i++) node = node[keys[i]];
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (node[keys[i]] == null) return obj;
+    node = node[keys[i]];
+  }
   node[keys[keys.length - 1]] = value;
   return obj;
 }
@@ -26,6 +30,7 @@ export const useAvatarStore = create((set, get) => ({
   loading: false,
   loaded: false,
   error: null,
+  _initPromise: null,
 
   catalog: [],
   catalogIndex: new Map(),
@@ -41,31 +46,39 @@ export const useAvatarStore = create((set, get) => ({
 
   async init(force = false) {
     if (get().loaded && !force) return;
+    const existing = get()._initPromise;
+    if (existing) return existing;
+
     set({ loading: true, error: null });
-    try {
-      const [manifest, avatar, inv, prog] = await Promise.all([
-        AvatarApi.manifest(),
-        AvatarApi.myAvatar(),
-        AvatarApi.inventory(),
-        AvatarApi.progression(),
-      ]);
-      const catalog = manifest.items || [];
-      const catalogIndex = new Map(catalog.map((it) => [it.id, it]));
-      const itemsByCategory = {};
-      for (const it of catalog) {
-        (itemsByCategory[it.category] = itemsByCategory[it.category] || []).push(it);
+    const promise = (async () => {
+      try {
+        const [manifest, avatar, inv, prog] = await Promise.all([
+          AvatarApi.manifest(),
+          AvatarApi.myAvatar(),
+          AvatarApi.inventory(),
+          AvatarApi.progression(),
+        ]);
+        const catalog = manifest.items || [];
+        const catalogIndex = new Map(catalog.map((it) => [it.id, it]));
+        const itemsByCategory = {};
+        for (const it of catalog) {
+          (itemsByCategory[it.category] = itemsByCategory[it.category] || []).push(it);
+        }
+        const ownedSet = new Set((inv.items || []).map((r) => r.item_id));
+        const recipe = avatar.recipe || defaultRecipe();
+        set({
+          loading: false, loaded: true, _initPromise: null,
+          catalog, catalogIndex, itemsByCategory, ownedSet,
+          saved: clone(recipe), draft: clone(recipe),
+          history: [], dirty: false, progression: prog,
+        });
+      } catch (err) {
+        set({ loading: false, error: err.message, _initPromise: null });
       }
-      const ownedSet = new Set((inv.items || []).map((r) => r.item_id));
-      const recipe = avatar.recipe || defaultRecipe();
-      set({
-        loading: false, loaded: true,
-        catalog, catalogIndex, itemsByCategory, ownedSet,
-        saved: clone(recipe), draft: clone(recipe),
-        history: [], dirty: false, progression: prog,
-      });
-    } catch (err) {
-      set({ loading: false, error: err.message });
-    }
+    })();
+
+    set({ _initPromise: promise });
+    return promise;
   },
 
   async refreshProgression() {

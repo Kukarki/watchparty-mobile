@@ -42,14 +42,17 @@ export default function AppLayout() {
       if (Array.isArray(onlineIds)) setOnlineFromSnapshot(onlineIds);
     };
 
-    socketService.on(SOCKET_EVENTS.PRESENCE_UPDATE, onPresenceUpdate);
-    socketService.on(SOCKET_EVENTS.PRESENCE_SNAPSHOT, onPresenceSnapshot);
+    // Connect socket at login so presence listeners are actually registered
+    socketService.connect().then((socket) => {
+      socket.on(SOCKET_EVENTS.PRESENCE_UPDATE, onPresenceUpdate);
+      socket.on(SOCKET_EVENTS.PRESENCE_SNAPSHOT, onPresenceSnapshot);
+    }).catch(() => {});
 
     return () => {
       socketService.off(SOCKET_EVENTS.PRESENCE_UPDATE, onPresenceUpdate);
       socketService.off(SOCKET_EVENTS.PRESENCE_SNAPSHOT, onPresenceSnapshot);
     };
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user?.id]);
 
   if (!isAuthenticated) return null;
 

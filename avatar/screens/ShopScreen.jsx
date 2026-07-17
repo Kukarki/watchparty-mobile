@@ -18,6 +18,7 @@ const CATEGORY_LABELS = {
 function PriceTag({ price, discountPct, owned, locked }) {
   if (owned) return <Txt s="dim" style={{ fontSize: 11 }}>Owned ✓</Txt>;
   if (locked) return <Txt s="dim" style={{ fontSize: 11 }}>🔒 {locked}</Txt>;
+  if (!price) return null;
   const parts = [];
   if (price.coins != null) parts.push(`🪙 ${price.coins.toLocaleString()}`);
   if (price.gems != null) parts.push(`💎 ${price.gems.toLocaleString()}`);
@@ -63,7 +64,8 @@ export default function ShopScreen({ onClose }) {
     const cut = (v) => (v == null ? null : Math.round(v * (100 - discountPct) / 100));
     const coins = discountPct ? cut(it.price_coins) : it.price_coins;
     const gems = discountPct ? cut(it.price_gems) : it.price_gems;
-    const priceStr = coins != null ? `${coins.toLocaleString()} coins` : `${gems.toLocaleString()} gems`;
+    const priceStr = coins != null ? `${coins.toLocaleString()} coins`
+      : gems != null ? `${gems.toLocaleString()} gems` : 'free';
 
     Alert.alert(`Buy ${it.name}?`, `${it.rarity} ${CATEGORY_LABELS[it.category] || it.category} · ${priceStr}`, [
       { text: 'Cancel', style: 'cancel' },

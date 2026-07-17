@@ -24,7 +24,7 @@ export default function MatchBlitzScreen({ socket, sessionId, meId, playersMeta 
       clearTimeout(revealTimer.current);
       revealTimer.current = setTimeout(() => setReveal(null), 1100);
     }
-    return () => {};
+    return () => { clearTimeout(revealTimer.current); };
   }, [lastEvents]);
 
   if (!state && lobby) {

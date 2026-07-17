@@ -232,6 +232,9 @@ export function ChatPanel({ roomId }: ChatPanelProps) {
   const listRef = useRef<FlatList>(null);
   const inputRef = useRef<TextInput>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => { if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current); };
+  }, []);
 
   const filteredMessages = useMemo(
     () =>

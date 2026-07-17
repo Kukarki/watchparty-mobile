@@ -103,10 +103,12 @@ export default function FriendsScreen() {
       setSearchResults([]);
       return;
     }
+    let cancelled = false;
     searchTimer.current = setTimeout(async () => {
       setSearching(true);
       try {
         const res = await friendApi.search(searchQuery.trim());
+        if (cancelled) return;
         const raw = res.data.results ?? res.data.users ?? res.data ?? [];
         setSearchResults(raw.map((u: any) => ({
           userId: u.userId ?? u.user_id ?? u.id,
@@ -115,11 +117,15 @@ export default function FriendsScreen() {
           avatar: u.avatar ?? u.avatar_url,
         })));
       } catch {
-        setSearchResults([]);
+        if (!cancelled) setSearchResults([]);
       } finally {
-        setSearching(false);
+        if (!cancelled) setSearching(false);
       }
     }, 400);
+    return () => {
+      cancelled = true;
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
   }, [searchQuery]);
 
   async function sendRequest(toUserId: string) {

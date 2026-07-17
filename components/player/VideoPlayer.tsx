@@ -50,6 +50,7 @@ export function VideoPlayer({ roomId, isHost }: VideoPlayerProps) {
 
   useEffect(() => {
     if (!player) return;
+    if (suppressSyncRef.current) return;
     const drift = Math.abs(player.currentTime - videoState.currentTime);
     if (drift > SYNC_THRESHOLD) {
       suppressSyncRef.current = true;
@@ -62,6 +63,12 @@ export function VideoPlayer({ roomId, isHost }: VideoPlayerProps) {
       player.pause();
     }
   }, [videoState.isPlaying, videoState.currentTime, player]);
+
+  useEffect(() => {
+    return () => {
+      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    };
+  }, []);
 
   // Poll time/duration for progress bar
   useEffect(() => {

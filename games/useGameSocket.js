@@ -45,14 +45,17 @@ export function useGameSocket(socket, sessionId) {
   }, [socket, sessionId]);
 
   const move = useCallback((m, cb) => {
+    if (!socket) { cb && cb({ error: 'not connected' }); return; }
     socket.emit('game:move', { sessionId: sid.current, move: m }, cb || (() => {}));
   }, [socket]);
 
   const start = useCallback((cb) => {
+    if (!socket) { cb && cb({ error: 'not connected' }); return; }
     socket.emit('game:start', { sessionId: sid.current }, cb || (() => {}));
   }, [socket]);
 
   const leave = useCallback(() => {
+    if (!socket) return;
     socket.emit('game:leave', { sessionId: sid.current }, () => {});
   }, [socket]);
 
