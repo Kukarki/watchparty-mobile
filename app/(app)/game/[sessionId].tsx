@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuthStore } from '@/stores/auth.store';
 import { socketService } from '@/services/socket';
-import { WildBeamScreen, MatchBlitzScreen } from '../../../games';
+import { WildBeamScreen, MatchBlitzScreen, LudoScreen } from '../../../games';
 
 export default function GameScreen() {
   const { sessionId, gameId } = useLocalSearchParams<{ sessionId: string; gameId: string }>();
@@ -16,8 +16,7 @@ export default function GameScreen() {
     onExit: () => router.back(),
   };
 
-  if (gameId === 'matchblitz') {
-    return <MatchBlitzScreen {...commonProps} />;
-  }
+  if (gameId === 'matchblitz') return <MatchBlitzScreen {...commonProps} />;
+  if (gameId === 'ludo')      return <LudoScreen {...commonProps} />;
   return <WildBeamScreen {...commonProps} />;
 }
