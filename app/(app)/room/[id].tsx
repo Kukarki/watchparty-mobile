@@ -35,6 +35,7 @@ import { showLocalNotification } from '@/services/notifications';
 import { addToHistory } from '@/services/history';
 import { hapticSuccess, hapticMedium, hapticLight } from '@/services/haptics';
 import { useWebRTC } from '@/hooks/useWebRTC';
+import { CameraCall } from '@/components/camera/CameraCall';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -79,6 +80,7 @@ export default function RoomScreen() {
   const [showVoice, setShowVoice] = useState(false);
   const [showQueue, setShowQueue] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
   const [addVideoUrl, setAddVideoUrl] = useState('');
   const [addVideoTitle, setAddVideoTitle] = useState('');
@@ -451,7 +453,7 @@ export default function RoomScreen() {
           <TextInput
             value={addVideoUrl}
             onChangeText={setAddVideoUrl}
-            placeholder="Paste YouTube or video URL to load…"
+            placeholder="YouTube, Vimeo, Twitch, Dailymotion, .m3u8, .mp4…"
             placeholderTextColor={COLORS.muted}
             style={styles.loadVideoInput}
             autoCapitalize="none"
@@ -546,6 +548,20 @@ export default function RoomScreen() {
             {isScreenSharing ? 'Sharing' : 'Screen'}
           </Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => { hapticMedium(); setShowCamera(true); }}
+          style={[styles.ctrlBtn, showCamera && styles.ctrlActive]}
+          accessibilityLabel="Camera call"
+          accessibilityRole="button"
+        >
+          <Ionicons
+            name={showCamera ? 'videocam' : 'videocam-outline'}
+            size={22}
+            color={showCamera ? COLORS.primary : COLORS.textSecondary}
+          />
+          <Text style={[styles.ctrlLabel, showCamera && { color: COLORS.primary }]}>Camera</Text>
+        </TouchableOpacity>
       </View>
 
       {/* ── Remote screen share overlay (WebRTC disabled) ── */}
@@ -573,6 +589,14 @@ export default function RoomScreen() {
       {/* ── Voice modal ── */}
       <VoiceModal roomId={id} visible={showVoice} onClose={() => setShowVoice(false)} />
 
+      {/* ── Camera call modal ── */}
+      <CameraCall
+        visible={showCamera}
+        roomId={id}
+        displayName={user?.username ?? user?.email ?? 'Guest'}
+        onClose={() => setShowCamera(false)}
+      />
+
       {/* ── Queue modal ── */}
       <Modal visible={showQueue} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowQueue(false)}>
         <View style={styles.queueModal}>
@@ -595,7 +619,7 @@ export default function RoomScreen() {
             <TextInput
               value={addVideoUrl}
               onChangeText={setAddVideoUrl}
-              placeholder="YouTube, HLS .m3u8 or direct video URL"
+              placeholder="YouTube, Vimeo, Twitch, Dailymotion, HLS .m3u8, direct .mp4…"
               placeholderTextColor={COLORS.muted}
               style={styles.addInput}
               autoCapitalize="none"

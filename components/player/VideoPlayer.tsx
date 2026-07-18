@@ -12,7 +12,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SOCKET_EVENTS, SPACE, RADIUS } from '@/constants';
 import { socketService } from '@/services/socket';
 import { useRoomStore } from '@/stores/room.store';
-import { YouTubePlayer, extractYouTubeId } from './YouTubePlayer';
+import { YouTubePlayer } from './YouTubePlayer';
+import { EmbedPlayer } from './EmbedPlayer';
+import { detectVideoSource, getSourceLabel, PLATFORM_ICONS } from '@/services/videoDetector';
 
 const SYNC_THRESHOLD = 2;
 
@@ -125,9 +127,21 @@ export function VideoPlayer({ roomId, isHost }: VideoPlayerProps) {
 
   const progress = duration > 0 ? Math.min(1, currentTime / duration) : 0;
 
-  const youtubeId = videoState.url ? extractYouTubeId(videoState.url) : null;
-  if (youtubeId) {
-    return <YouTubePlayer videoId={youtubeId} roomId={roomId} isHost={isHost} />;
+  const source = videoState.url ? detectVideoSource(videoState.url) : null;
+
+  if (source?.type === 'youtube') {
+    return <YouTubePlayer videoId={source.videoId} roomId={roomId} isHost={isHost} />;
+  }
+
+  if (source?.type === 'vimeo' || source?.type === 'twitch' || source?.type === 'dailymotion') {
+    return (
+      <EmbedPlayer
+        source={source}
+        isHost={isHost}
+        isPlaying={videoState.isPlaying}
+        currentTime={videoState.currentTime}
+      />
+    );
   }
 
   if (!videoState.url) {
@@ -136,8 +150,21 @@ export function VideoPlayer({ roomId, isHost }: VideoPlayerProps) {
         <Ionicons name="film-outline" size={48} color={COLORS.muted} />
         <Text style={styles.emptyText}>No video loaded</Text>
         {isHost && (
-          <Text style={styles.emptyHint}>Add a video from the queue to start watching</Text>
+          <Text style={styles.emptyHint}>
+            Paste a YouTube, Vimeo, Twitch, Dailymotion, HLS or direct video URL
+          </Text>
         )}
+      </View>
+    );
+  }
+
+  // Show platform badge for non-null source we can't embed
+  if (!source) {
+    return (
+      <View style={styles.empty}>
+        <Ionicons name="alert-circle-outline" size={48} color={COLORS.muted} />
+        <Text style={styles.emptyText}>Unsupported link</Text>
+        <Text style={styles.emptyHint}>Try YouTube, Vimeo, Twitch, Dailymotion, .m3u8 or .mp4</Text>
       </View>
     );
   }
