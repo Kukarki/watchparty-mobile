@@ -27,6 +27,7 @@ export interface ChatMessage {
   content: string;
   created_at: string;
   reactions?: Record<string, string[]>;
+  replyTo?: string;
 }
 
 export interface QueueItem {

@@ -35,11 +35,14 @@ export default function ProfileScreen() {
           ? () => <AvatarStage recipe={saved} catalogIndex={catalogIndex} framing="full" />
           : null
       }
-      onEditAvatar={() => router.push('/(app)/avatar-studio')}
-      onInventory={() => router.push('/(app)/avatar-inventory')}
-      onShop={() => router.push('/(app)/avatar-shop')}
-      onSettings={() => router.push('/(app)/settings')}
-      onAchievements={() => router.push('/(app)/achievements')}
+      onEditAvatar={() => router.push('/(app)/avatar-studio' as any)}
+      onInventory={() => router.push('/(app)/avatar-inventory' as any)}
+      onShop={() => router.push('/(app)/avatar-shop' as any)}
+      onSettings={() => router.push('/(app)/settings' as any)}
+      onAchievements={() => router.push('/(app)/achievements' as any)}
+      onShare={() => {}}
+      onOpenFriends={() => router.push('/(app)/(tabs)/friends' as any)}
+      onOpenRooms={() => router.push('/(app)/(tabs)/rooms' as any)}
     />
   );
 }

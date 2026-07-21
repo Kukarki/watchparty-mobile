@@ -1,27 +1,64 @@
 // Music lobby — list of listening rooms + create.
-import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Icon, { I } from '../ui/Icon';
 import ActionSheet from '../ui/Sheet';
 import { Avatar, Btn, Card, Chips, Empty, Header, Screen, Txt } from '../ui/kit';
 import { c, r, sp } from '../ui/tokens';
 
-const FILTERS = [{ id: 'all', name: 'All' }, { id: 'friends', name: 'Friends' }, { id: 'mine', name: 'Mine' }];
+const FILTERS = [{ id: 'all', name: 'All' }];
 
 export default function MusicLobbyScreen({ rooms = [], onBack, onOpen, onCreate }) {
   const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const [menu, setMenu] = useState(null);
-  const list = rooms.filter((r0) => filter === 'all' || (r0.tags || []).includes(filter));
+
+  const list = useMemo(() => {
+    let result = rooms.filter((r0) => filter === 'all' || (r0.tags || []).includes(filter));
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (r0) => r0.title?.toLowerCase().includes(q) || r0.nowPlaying?.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [rooms, filter, search]);
 
   return (
     <Screen>
       <Header title="Music lobby" subtitle="Listen together in sync" onBack={onBack} />
+
+      {/* Search bar */}
+      <View style={st.searchRow}>
+        <Icon name="search-outline" size={16} color={c.dim} />
+        <TextInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search rooms…"
+          placeholderTextColor={c.dim}
+          style={st.searchInput}
+          returnKeyType="search"
+          clearButtonMode="while-editing"
+        />
+        {search ? (
+          <Pressable onPress={() => setSearch('')} hitSlop={8}>
+            <Icon name="close-circle" size={16} color={c.dim} />
+          </Pressable>
+        ) : null}
+      </View>
+
       <Chips options={FILTERS} value={filter} onChange={setFilter} style={{ marginBottom: sp.m }} />
 
       {list.length === 0 ? (
-        <Empty icon={I.music} title="No listening rooms" 
-          sub="Start one and queue up YouTube tracks — everyone hears the same second."
-          action="Start a music room" onAction={onCreate} />
+        search ? (
+          <Empty icon="search-outline" title="No results"
+            sub={`No rooms matching "${search}"`}
+            action="Clear search" onAction={() => setSearch('')} />
+        ) : (
+          <Empty icon={I.music} title="No listening rooms"
+            sub="Start one and queue up YouTube tracks — everyone hears the same second."
+            action="Start a music room" onAction={onCreate} />
+        )
       ) : (
         <ScrollView contentContainerStyle={{ padding: sp.l, gap: sp.m, paddingBottom: 90 }}>
           {list.map((m) => (
@@ -69,4 +106,11 @@ export default function MusicLobbyScreen({ rooms = [], onBack, onOpen, onCreate 
 const st = StyleSheet.create({
   art: { width: 52, height: 52, borderRadius: r.sm, backgroundColor: c.beamDim, alignItems: 'center', justifyContent: 'center' },
   fabWrap: { position: 'absolute', left: sp.l, right: sp.l, bottom: 24 },
+  searchRow: {
+    flexDirection: 'row', alignItems: 'center', gap: sp.s,
+    marginHorizontal: sp.l, marginBottom: sp.m,
+    backgroundColor: c.surface, borderRadius: r.md, borderWidth: 1, borderColor: c.border,
+    paddingHorizontal: sp.m, paddingVertical: sp.s,
+  },
+  searchInput: { flex: 1, color: c.text, fontSize: 14, paddingVertical: 0 },
 });

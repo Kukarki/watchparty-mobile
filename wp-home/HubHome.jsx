@@ -99,6 +99,33 @@ function Widget({ icon, title, sub, badge, badgeTone = c.beam, onPress, tint }) 
   );
 }
 
+// ---------------------------------------------------------------- action card
+function ActionCard({ icon, tint, title, sub, onPress }) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const spring = (to) => Animated.spring(scale, {
+    toValue: to, useNativeDriver: true, speed: 40, bounciness: 6,
+  }).start();
+
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => spring(0.97)}
+        onPressOut={() => spring(1)}
+        style={st.actionCard}>
+        <View style={[st.actionIcon, { backgroundColor: tint + '22' }]}>
+          <Ionicons name={icon} size={22} color={tint} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Txt s={14} w="700">{title}</Txt>
+          <Txt s={10.5} col={c.dim} numberOfLines={1}>{sub}</Txt>
+        </View>
+        <Ionicons name="chevron-forward" size={16} color={c.dim} />
+      </Pressable>
+    </Animated.View>
+  );
+}
+
 // ---------------------------------------------------------------- live tile
 function LiveTile({ item, wide, onPress }) {
   const k = KIND[item.kind] || KIND.watch;
@@ -135,15 +162,13 @@ function LiveTile({ item, wide, onPress }) {
 export default function HubHome({
   name = 'there', avatarUrl, progression, resume, live = [], friendsOnline = [],
   challenge, refreshing, onRefresh,
-  onResume, onHost, onOpenGames, onOpenMusic, onOpenFriends, onOpenRooms,
+  onResume, onHost, onCreateRoom, onJoinRoom, onOpenGames, onOpenMusic, onOpenFriends, onOpenRooms,
   onOpenLive, onOpenProfile, onOpenSettings, onOpenChallenge,
 }) {
   const hour = new Date().getHours();
   const greeting = hour < 5 ? 'Still up' : hour < 12 ? 'Good morning'
     : hour < 18 ? 'Good afternoon' : 'Good evening';
 
-  // The Hub -> Grid switch. One live thing reads as noise; two is a scene.
-  const showGrid = live.length >= 2;
   const counts = useMemo(() => ({
     games: live.filter((l) => l.kind === 'game').reduce((n, l) => n + (l.count || 1), 0),
     music: live.filter((l) => l.kind === 'music').reduce((n, l) => n + (l.count || 0), 0),
@@ -185,23 +210,18 @@ export default function HubHome({
           </View>
         </View>
 
-        {/* resume — or first-run host prompt */}
-        {resume ? (
+        {/* resume card */}
+        {resume && (
           <Pressable onPress={() => onResume && onResume(resume)}
-            style={({ pressed }) => [{ opacity: pressed ? 0.92 : 1 }]}>
+            style={({ pressed }) => [{ opacity: pressed ? 0.92 : 1 }, { marginBottom: 12 }]}>
             <Gradient colors={[c.beam, c.beamDeep]} style={st.resume}>
               <Txt s={9.5} w="800" col="#ffffffaa" style={{ letterSpacing: 1.2 }}>
-                {resume.live ? 'HAPPENING NOW' : 'PICK UP WHERE YOU LEFT OFF'}
+                PICK UP WHERE YOU LEFT OFF
               </Txt>
               <Txt s={16.5} w="700" col="#fff" numberOfLines={1} style={{ marginTop: 6 }}>
                 {resume.title}
               </Txt>
-              {resume.progressPct != null && (
-                <View style={st.resumeTrack}>
-                  <View style={[st.resumeFill, { width: `${resume.progressPct}%` }]} />
-                </View>
-              )}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
                 {resume.members ? <Stack people={resume.members} size={18} /> : null}
                 <Txt s={10} col="#ffffffcc" style={{ flex: 1 }} numberOfLines={1}>{resume.subtitle}</Txt>
                 <View style={st.resumeGo}>
@@ -211,50 +231,36 @@ export default function HubHome({
               </View>
             </Gradient>
           </Pressable>
-        ) : (
-          <Pressable onPress={onHost} style={({ pressed }) => [{ opacity: pressed ? 0.92 : 1 }]}>
-            <Gradient colors={[c.beam, c.beamDeep]} style={st.resume}>
-              <Txt s={9.5} w="800" col="#ffffffaa" style={{ letterSpacing: 1.2 }}>START SOMETHING</Txt>
-              <Txt s={17} w="700" col="#fff" style={{ marginTop: 6 }}>Host a watch party</Txt>
-              <Txt s={11} col="#ffffffcc" style={{ marginTop: 3 }}>
-                Pick a video, invite friends, everyone stays in sync
-              </Txt>
-              <View style={[st.resumeGo, { alignSelf: 'flex-start', marginTop: 12 }]}>
-                <Ionicons name="add" size={14} color={c.beam} />
-                <Txt s={11.5} w="800" col={c.beam}>Choose a video</Txt>
-              </View>
-            </Gradient>
-          </Pressable>
         )}
 
-        {/* LIVE GRID — only when there's a scene to show */}
-        {showGrid && (
-          <>
-            <Label action="See all" onAction={onOpenRooms}>LIVE NOW</Label>
-            <View style={{ gap: 9 }}>
-              <LiveTile item={live[0]} wide onPress={onOpenLive} />
-              <View style={{ flexDirection: 'row', gap: 9 }}>
-                {live.slice(1, 3).map((it) => (
-                  <LiveTile key={it.id} item={it} onPress={onOpenLive} />
-                ))}
-                {live.length === 2 ? (
-                  <Pressable onPress={onHost} style={st.addTile}>
-                    <Ionicons name="add" size={20} color={c.beam} />
-                    <Txt s={10} w="700" col={c.beam}>Start one</Txt>
-                  </Pressable>
-                ) : null}
-              </View>
-              {live.length > 3 && (
-                <View style={{ flexDirection: 'row', gap: 9 }}>
-                  {live.slice(3, 5).map((it) => (
-                    <LiveTile key={it.id} item={it} onPress={onOpenLive} />
-                  ))}
-                  {live.length === 4 ? <View style={{ flex: 1 }} /> : null}
-                </View>
-              )}
-            </View>
-          </>
-        )}
+        {/* Main action cards */}
+        <Label>START SOMETHING</Label>
+        <View style={{ gap: 9, marginBottom: 6 }}>
+          {/* Create a room */}
+          <ActionCard
+            icon="add-circle"
+            tint={c.beam}
+            title="Create a Room"
+            sub="Start a watch party, game, or music session"
+            onPress={onCreateRoom || onHost}
+          />
+          {/* Join a room */}
+          <ActionCard
+            icon="enter-outline"
+            tint={c.cyan}
+            title="Join a Room"
+            sub="Enter a room code to join friends"
+            onPress={onJoinRoom}
+          />
+          {/* Watch together */}
+          <ActionCard
+            icon="play-circle"
+            tint={c.beamHot}
+            title="Watch Together"
+            sub="YouTube, Vimeo, Twitch, Dailymotion, or direct link"
+            onPress={onHost}
+          />
+        </View>
 
         {/* widgets */}
         <Label>DO SOMETHING</Label>
@@ -381,6 +387,12 @@ const st = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 3,
     backgroundColor: '#00000059', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6,
   },
+  actionCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: c.surface, borderRadius: 18, borderWidth: 1, borderColor: c.border,
+    padding: 14,
+  },
+  actionIcon: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   addTile: {
     flex: 1, height: 104, borderRadius: 18, borderWidth: 1.5, borderColor: c.borderHi,
     borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 4,

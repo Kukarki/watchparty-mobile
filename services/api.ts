@@ -78,6 +78,7 @@ export function mapChatMessage(message: any): ChatMessage {
       ? new Date(message.createdAt).toISOString()
       : (message.created_at ?? new Date().toISOString()),
     reactions: message.reactions ?? {},
+    replyTo: message.replyTo ?? message.reply_to,
   };
 }
 
@@ -120,8 +121,9 @@ export const authApi = {
 const mapRooms = (res: any) => ({ ...res, data: { ...res.data, rooms: (res.data.rooms ?? []).map(mapRoom) } });
 
 export const roomsApi = {
-  create: (name: string) => api.post('/rooms', { name })
-    .then((res) => ({ ...res, data: { ...res.data, room: mapRoom(res.data.room) } })),
+  create: (name: string, opts?: { roomType?: string; gameType?: string; videoUrl?: string }) =>
+    api.post('/rooms', { name, ...opts })
+      .then((res) => ({ ...res, data: { ...res.data, room: mapRoom(res.data.room) } })),
   join: (code: string) => api.get(`/rooms/${code}`)
     .then((res) => ({ ...res, data: { ...res.data, room: mapRoom(res.data.room) } })),
   get: (id: string) => api.get(`/rooms/${id}`)

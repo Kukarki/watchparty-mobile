@@ -71,8 +71,29 @@ export default function StudioScreen({ onClose, onSaved }) {
           <Txt s="h2">Avatar Studio</Txt>
           <View style={{ width: 80 }} />
         </View>
-        <View style={[st.center, { flex: 1 }]}>
-          <Txt s="dim">Loading Studio…</Txt>
+        <View style={[st.center, { flex: 1, padding: 24 }]}>
+          {store.error ? (
+            <>
+              <Txt style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Txt>
+              <Txt s="h2" style={{ textAlign: 'center', marginBottom: 8 }}>Could not load studio</Txt>
+              <Txt s="dim" style={{ textAlign: 'center', marginBottom: 24, color: '#FF4D6D' }}>
+                {store.error}
+              </Txt>
+              <Pressable
+                onPress={() => store.init(true)}
+                style={{
+                  backgroundColor: colors.beam, paddingHorizontal: 28,
+                  paddingVertical: 12, borderRadius: 12,
+                }}>
+                <Txt style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Retry</Txt>
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <Txt s="dim" style={{ marginBottom: 16 }}>Loading Studio…</Txt>
+              <Txt s="cap">This may take a moment on first load</Txt>
+            </>
+          )}
         </View>
       </View>
     );

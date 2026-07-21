@@ -17,8 +17,9 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://129.213.32.232:4000/api/v1",
-        "EXPO_PUBLIC_SOCKET_URL": "http://129.213.32.232:4000"
+        "EXPO_PUBLIC_API_URL": "https://sandipwatch7.dedyn.io/api/v1",
+        "EXPO_PUBLIC_SOCKET_URL": "https://sandipwatch7.dedyn.io",
+        "EXPO_PUBLIC_AVATAR_URL": "https://sandipwatch7.dedyn.io/api/v1/avatar-system"
       }
     },
     "production": {

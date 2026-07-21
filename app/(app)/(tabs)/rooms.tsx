@@ -50,7 +50,7 @@ export default function RoomsTab() {
       hapticSuccess();
       setShowCreate(false);
       setRoomName('');
-      router.push(`/(app)/room/${data.room.id}`);
+      router.push(`/(app)/room/${data.room.id}` as any);
     } catch {
       hapticError();
       Toast.show({ type: 'error', text1: 'Could not create room' });
@@ -64,7 +64,7 @@ export default function RoomsTab() {
       const { data } = await roomsApi.join(code.trim());
       setRoom(data.room);
       hapticSuccess();
-      router.push(`/(app)/room/${data.room.id}`);
+      router.push(`/(app)/room/${data.room.id}` as any);
     } catch {
       hapticError();
       Toast.show({ type: 'error', text1: 'Room not found or code invalid' });
@@ -78,7 +78,7 @@ export default function RoomsTab() {
         discover={discover}
         onOpenRoom={(room: any) => {
           setRoom({ id: room.id, name: room.title, code: room.code } as any);
-          router.push(`/(app)/room/${room.id}`);
+          router.push(`/(app)/room/${room.id}` as any);
         }}
         onCreate={() => { setRoomName(''); setShowCreate(true); }}
         onJoinCode={handleJoinCode}

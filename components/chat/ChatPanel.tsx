@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,9 +12,12 @@ import {
   PanResponder,
   Animated,
   Alert,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import * as SecureStore from 'expo-secure-store';
 import { format } from 'date-fns';
 import { COLORS, EMOJI_REACTIONS, SOCKET_EVENTS, SPACE, RADIUS } from '@/constants';
 import { socketService } from '@/services/socket';
@@ -22,6 +25,32 @@ import { useRoomStore } from '@/stores/room.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { hapticLight, hapticMedium } from '@/services/haptics';
 import { ChatMessage } from '@/types';
+
+const CHAT_THEMES = [
+  { id: 'purple', label: 'Indigo', color: '#7C3AED' },
+  { id: 'blue',   label: 'Blue',   color: '#2563EB' },
+  { id: 'green',  label: 'Emerald',color: '#059669' },
+  { id: 'orange', label: 'Amber',  color: '#D97706' },
+  { id: 'rose',   label: 'Rose',   color: '#E11D48' },
+  { id: 'teal',   label: 'Teal',   color: '#0891B2' },
+];
+const THEME_STORAGE_KEY = '@chat_theme';
+
+function useChatTheme() {
+  const [themeId, setThemeId] = useState('purple');
+
+  useEffect(() => {
+    SecureStore.getItemAsync(THEME_STORAGE_KEY).then((v) => { if (v) setThemeId(v); }).catch(() => {});
+  }, []);
+
+  const saveTheme = (id: string) => {
+    setThemeId(id);
+    SecureStore.setItemAsync(THEME_STORAGE_KEY, id).catch(() => {});
+  };
+
+  const color = CHAT_THEMES.find((t) => t.id === themeId)?.color ?? COLORS.primary;
+  return { themeId, color, saveTheme };
+}
 
 // ── Full emoji keyboard ──────────────────────────────────────────────────────
 const EMOJI_CATEGORIES = [
@@ -69,11 +98,13 @@ function SwipeableMessage({
   isOwn,
   onLongPress,
   onSwipeReply,
+  themeColor,
 }: {
   msg: ChatMessage;
   isOwn: boolean;
   onLongPress: () => void;
   onSwipeReply: (msg: ChatMessage) => void;
+  themeColor: string;
 }) {
   const translateX = useRef(new Animated.Value(0)).current;
 
@@ -104,7 +135,7 @@ function SwipeableMessage({
 
   return (
     <Animated.View {...panResponder.panHandlers} style={{ transform: [{ translateX }] }}>
-      <MessageBubble msg={msg} isOwn={isOwn} onLongPress={onLongPress} />
+      <MessageBubble msg={msg} isOwn={isOwn} onLongPress={onLongPress} themeColor={themeColor} />
     </Animated.View>
   );
 }
@@ -114,10 +145,12 @@ function MessageBubble({
   msg,
   isOwn,
   onLongPress,
+  themeColor,
 }: {
   msg: ChatMessage;
   isOwn: boolean;
   onLongPress: () => void;
+  themeColor: string;
 }) {
   const [showPicker, setShowPicker] = useState(false);
 
@@ -135,13 +168,18 @@ function MessageBubble({
       onLongPress={() => { setShowPicker(false); onLongPress(); }}
       onPress={() => showPicker && setShowPicker(false)}
       activeOpacity={0.9}
-      style={[styles.bubble, isOwn ? styles.bubbleOwn : styles.bubbleOther]}
+      style={[
+        styles.bubble,
+        isOwn
+          ? [styles.bubbleOwn, { backgroundColor: themeColor }]
+          : styles.bubbleOther,
+      ]}
       accessibilityLabel={`${msg.username ?? 'User'}: ${msg.content}`}
       accessibilityRole="text"
     >
-      {!isOwn && <Text style={styles.username}>{msg.username}</Text>}
+      {!isOwn && <Text style={[styles.username, { color: themeColor }]}>{msg.username}</Text>}
       {msg.replyTo && (
-        <View style={styles.replyQuote}>
+        <View style={[styles.replyQuote, { borderLeftColor: themeColor }]}>
           <Text style={styles.replyQuoteText} numberOfLines={1}>{msg.replyTo}</Text>
         </View>
       )}
@@ -219,12 +257,41 @@ function ReplyBar({ msg, onCancel }: { msg: ChatMessage; onCancel: () => void })
   );
 }
 
+// ── Theme picker ──────────────────────────────────────────────────────────────
+function ThemePicker({ visible, themeId, onSelect, onClose }: {
+  visible: boolean; themeId: string; onSelect: (id: string) => void; onClose: () => void;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.themeBackdrop} onPress={onClose} />
+      <View style={styles.themeSheet}>
+        <View style={styles.themeGrabber} />
+        <Text style={styles.themeTitle}>Chat Theme</Text>
+        <View style={styles.themeGrid}>
+          {CHAT_THEMES.map((t) => (
+            <Pressable
+              key={t.id}
+              style={[styles.themeChip, { backgroundColor: t.color },
+                themeId === t.id && styles.themeChipActive]}
+              onPress={() => { onSelect(t.id); onClose(); }}>
+              <Text style={styles.themeChipLabel}>{t.label}</Text>
+              {themeId === t.id && <Text style={styles.themeCheck}>✓</Text>}
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 // ── Main ChatPanel ────────────────────────────────────────────────────────────
 export function ChatPanel({ roomId }: ChatPanelProps) {
   const { messages, typingUsers } = useRoomStore();
   const { user } = useAuthStore();
+  const { themeId, color: themeColor, saveTheme } = useChatTheme();
   const [text, setText] = useState('');
   const [showEmojiKeyboard, setShowEmojiKeyboard] = useState(false);
+  const [showThemePicker, setShowThemePicker] = useState(false);
   const [activeCategory, setActiveCategory] = useState(0);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -323,6 +390,13 @@ export function ChatPanel({ roomId }: ChatPanelProps) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={100}
     >
+      <ThemePicker
+        visible={showThemePicker}
+        themeId={themeId}
+        onSelect={saveTheme}
+        onClose={() => setShowThemePicker(false)}
+      />
+
       {/* ── Header ── */}
       <View style={styles.headerRow}>
         {showSearch ? (
@@ -340,6 +414,14 @@ export function ChatPanel({ roomId }: ChatPanelProps) {
           <Text style={styles.header}>Chat</Text>
         )}
         <TouchableOpacity
+          onPress={() => setShowThemePicker(true)}
+          style={styles.searchBtn}
+          accessibilityLabel="Change theme"
+          accessibilityRole="button"
+        >
+          <View style={[styles.themePreviewDot, { backgroundColor: themeColor }]} />
+        </TouchableOpacity>
+        <TouchableOpacity
           onPress={() => {
             setShowSearch((v) => {
               if (v) setSearchQuery('');
@@ -353,7 +435,7 @@ export function ChatPanel({ roomId }: ChatPanelProps) {
           <Ionicons
             name={showSearch ? 'close-outline' : 'search-outline'}
             size={20}
-            color={showSearch ? COLORS.primary : COLORS.muted}
+            color={showSearch ? themeColor : COLORS.muted}
           />
         </TouchableOpacity>
       </View>
@@ -379,6 +461,7 @@ export function ChatPanel({ roomId }: ChatPanelProps) {
               setShowEmojiKeyboard(false);
               setTimeout(() => inputRef.current?.focus(), 100);
             }}
+            themeColor={themeColor}
           />
         )}
         contentContainerStyle={styles.list}
@@ -476,7 +559,7 @@ export function ChatPanel({ roomId }: ChatPanelProps) {
           <Ionicons
             name="send"
             size={20}
-            color={text.trim() ? COLORS.primary : COLORS.muted}
+            color={text.trim() ? themeColor : COLORS.muted}
           />
         </TouchableOpacity>
       </View>
@@ -675,4 +758,30 @@ const styles = StyleSheet.create({
   },
   sendBtn: { padding: 8 },
   sendBtnDisabled: { opacity: 0.4 },
+
+  // ── Theme picker ──
+  themePreviewDot: { width: 16, height: 16, borderRadius: 8 },
+  themeBackdrop: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: '#000A',
+  },
+  themeSheet: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    backgroundColor: COLORS.card, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    paddingBottom: 32, paddingHorizontal: 20, paddingTop: 12,
+    borderTopWidth: 1, borderTopColor: COLORS.border,
+  },
+  themeGrabber: {
+    width: 36, height: 4, borderRadius: 2, backgroundColor: COLORS.border,
+    alignSelf: 'center', marginBottom: 16,
+  },
+  themeTitle: { color: COLORS.textPrimary, fontSize: 16, fontWeight: '700', marginBottom: 16 },
+  themeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  themeChip: {
+    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 22,
+    flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 2, borderColor: 'transparent',
+  },
+  themeChipActive: { borderColor: 'rgba(255,255,255,0.7)' },
+  themeChipLabel: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  themeCheck: { color: '#fff', fontSize: 13 },
 });

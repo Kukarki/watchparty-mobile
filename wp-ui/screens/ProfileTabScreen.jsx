@@ -17,19 +17,25 @@ function XPBar({ into = 0, needed = 1 }) {
   );
 }
 
-function Stat({ value, label, icon }) {
+function Stat({ value, label, icon, onPress }) {
   return (
-    <View style={st.stat}>
+    <Pressable style={st.stat} onPress={onPress} disabled={!onPress}>
       {icon ? <Icon name={icon} size={15} color={c.beam} /> : null}
       <Txt s="num" style={{ marginTop: 3 }}>{value ?? '—'}</Txt>
       <Txt s="cap" numberOfLines={1}>{label}</Txt>
-    </View>
+      {onPress ? (
+        <View style={st.statArrow}>
+          <Icon name="chevron-forward" size={10} color={c.dim} />
+        </View>
+      ) : null}
+    </Pressable>
   );
 }
 
 export default function ProfileTabScreen({
   name = 'You', progression, stats, achievements = [], AvatarHero,
   onEditAvatar, onInventory, onShop, onSettings, onAchievements, onShare,
+  onOpenFriends, onOpenRooms,
 }) {
   const [menu, setMenu] = useState(false);
   const p = progression;
@@ -107,10 +113,10 @@ export default function ProfileTabScreen({
         {/* stats */}
         <SectionLabel>STATS</SectionLabel>
         <View style={st.statGrid}>
-          <Stat icon="play-circle-outline" value={stats && stats.watchSessions} label="Watch sessions" />
-          <Stat icon={I.rooms} value={stats && stats.roomsJoined} label="Rooms joined" />
-          <Stat icon="radio-outline" value={stats && stats.roomsHosted} label="Hosted" />
-          <Stat icon={I.people} value={stats && stats.friends} label="Friends" />
+          <Stat icon="play-circle-outline" value={stats && stats.watchSessions} label="Watch sessions" onPress={onOpenRooms} />
+          <Stat icon={I.rooms} value={stats && stats.roomsJoined} label="Rooms joined" onPress={onOpenRooms} />
+          <Stat icon="radio-outline" value={stats && stats.roomsHosted} label="Hosted" onPress={onOpenRooms} />
+          <Stat icon={I.people} value={stats && stats.friends} label="Friends" onPress={onOpenFriends} />
           <Stat icon={I.fire} value={stats && stats.longestStreak} label="Best streak" />
           <Stat icon={I.invite} value={stats && stats.invitesAccepted} label="Invites" />
         </View>
@@ -178,6 +184,10 @@ const st = StyleSheet.create({
   stat: {
     width: '31.6%', backgroundColor: c.surface, borderRadius: r.md,
     borderWidth: 1, borderColor: c.border, alignItems: 'center', paddingVertical: sp.m,
+    position: 'relative',
+  },
+  statArrow: {
+    position: 'absolute', bottom: 4, right: 6, opacity: 0.4,
   },
   trophy: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
 });
